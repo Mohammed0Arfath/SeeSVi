@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Code, Download } from 'lucide-react';
+import { Send, Bot, User, Loader2, Code, Download, Settings, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Message {
   id: string;
@@ -32,13 +35,81 @@ export function ChatInterface({ data, fileName }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSQL, setShowSQL] = useState<Record<string, boolean>>({});
+  const [apiKey, setApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Load API key from localStorage on mount
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('openai_api_key');
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+  }, []);
   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
+  const callOpenAI = async (userQuery: string, data: any[]) => {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a data analyst AI. You have access to a dataset with ${data.length} rows. Answer questions about this data concisely and provide SQL queries when relevant. The table is called 'df'. Here's a sample of the data structure: ${JSON.stringify(data.slice(0, 2))}`
+            },
+            {
+              role: 'user',
+              content: userQuery
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return {
+        content: result.choices[0]?.message?.content || 'Sorry, I could not process your request.',
+        sql: extractSQL(result.choices[0]?.message?.content || ''),
+        data: generateMockData(userQuery, data) // For now, keep mock data generation
+      };
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      throw error;
+    }
+  };
+
+  const extractSQL = (content: string) => {
+    const sqlMatch = content.match(/```sql\n([\s\S]*?)\n```/);
+    return sqlMatch ? sqlMatch[1] : null;
+  };
+
+  const saveApiKey = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem('openai_api_key', key);
+    setApiKeyDialogOpen(false);
+  };
+
+  const removeApiKey = () => {
+    setApiKey('');
+    localStorage.removeItem('openai_api_key');
+  };
+
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
     
@@ -50,23 +121,50 @@ export function ChatInterface({ data, fileName }: ChatInterfaceProps) {
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
     
-    // Simulate AI response (replace with actual OpenAI integration)
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: generateMockResponse(input, data),
-        timestamp: new Date(),
-        sql: generateMockSQL(input),
-        data: generateMockData(input, data),
-      };
+    try {
+      let assistantMessage: Message;
+      
+      if (apiKey) {
+        // Use OpenAI API
+        const response = await callOpenAI(currentInput, data);
+        assistantMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: response.content,
+          timestamp: new Date(),
+          sql: response.sql,
+          data: response.data,
+        };
+      } else {
+        // Fallback to mock response
+        assistantMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: generateMockResponse(currentInput, data) + '\n\n*Note: Using mock responses. Set your OpenAI API key for AI-powered analysis.*',
+          timestamp: new Date(),
+          sql: generateMockSQL(currentInput),
+          data: generateMockData(currentInput, data),
+        };
+      }
       
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: `Error connecting to OpenAI. Using fallback response instead.\n\n${generateMockResponse(currentInput, data)}`,
+        timestamp: new Date(),
+        sql: generateMockSQL(currentInput),
+        data: generateMockData(currentInput, data),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
   
   const generateMockResponse = (query: string, data: any[]) => {
@@ -147,13 +245,71 @@ export function ChatInterface({ data, fileName }: ChatInterfaceProps) {
   return (
     <Card className="h-[600px] flex flex-col">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-primary" />
-          Chat with Your Data
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Ask questions about your dataset and get AI-powered insights
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-primary" />
+              Chat with Your Data
+              {apiKey && <Badge variant="secondary" className="text-xs">AI Enabled</Badge>}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Ask questions about your dataset and get AI-powered insights
+            </p>
+          </div>
+          
+          <Dialog open={apiKeyDialogOpen} onOpenChange={setApiKeyDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                API Key
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>OpenAI API Key Settings</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="api-key">OpenAI API Key</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      id="api-key"
+                      type={showApiKey ? 'text' : 'password'}
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder="sk-..."
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                    >
+                      {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your API key is stored locally in your browser
+                  </p>
+                </div>
+                
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={removeApiKey} disabled={!apiKey}>
+                    Remove Key
+                  </Button>
+                  <Button onClick={() => saveApiKey(apiKey)} disabled={!apiKey.trim()}>
+                    Save Key
+                  </Button>
+                </div>
+                
+                <div className="text-xs text-muted-foreground">
+                  <p>Without an API key, you'll receive mock responses for demonstration purposes.</p>
+                  <p className="mt-1">Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary underline">OpenAI's platform</a>.</p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">

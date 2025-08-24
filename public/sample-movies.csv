@@ -1,0 +1,21 @@
+movie_id,title,genre,release_year,rating,runtime_minutes,box_office_millions,budget_millions,director,lead_actor
+1,The Quantum Paradox,Sci-Fi,2023,8.2,142,285.5,95.0,Sarah Chen,Michael Torres
+2,Moonlight Serenade,Romance,2022,7.8,118,120.3,25.0,Emma Williams,Claire Johnson
+3,Thunder Valley,Action,2023,7.5,135,310.8,120.0,Jake Morrison,Chris Anderson
+4,The Artist's Dream,Drama,2022,8.9,156,89.2,15.0,Maria Rodriguez,David Thompson
+5,Galaxy Warriors,Sci-Fi,2023,7.1,128,425.7,180.0,Alex Kim,Ryan Mitchell
+6,Midnight in Paris,Romance,2021,8.4,102,95.6,20.0,Sophie Laurent,Antoine Dubois
+7,Steel & Honor,Action,2023,6.8,118,198.4,85.0,Tony Harrison,Marcus Stone
+8,The Silent Truth,Thriller,2022,8.1,134,156.9,40.0,Linda Park,Jennifer Hayes
+9,Summer Memories,Comedy,2023,7.6,108,187.3,35.0,Robert Davis,Kevin Murphy
+10,The Lost Kingdom,Fantasy,2022,7.9,164,378.2,150.0,Diana Prince,Ethan Clark
+11,Urban Legends,Horror,2023,6.9,95,78.5,12.0,Mark Stevens,Rachel Green
+12,Beyond the Stars,Sci-Fi,2021,8.0,149,245.1,75.0,Patricia Lee,Brandon Cox
+13,Love Actually,Romance,2023,7.3,125,142.7,30.0,Isabella Garcia,Lucas Miller
+14,Force of Nature,Action,2022,7.7,112,267.8,95.0,Victor Chang,Amanda Wilson
+15,The Philosopher,Drama,2023,8.6,178,67.4,8.0,Thomas Wright,Elizabeth Moore
+16,Space Odyssey 2024,Sci-Fi,2024,8.3,155,398.9,140.0,Catherine Bell,Jonathan Taylor
+17,Crimson Sunset,Western,2022,7.4,136,89.1,22.0,Joseph Martinez,Samuel Jackson
+18,The Heist,Thriller,2023,7.8,122,201.5,55.0,Monica Singh,Tyler Brown
+19,Family Reunion,Comedy,2022,6.5,98,156.8,28.0,Gregory White,Ashley Davis
+20,Mystic Forest,Fantasy,2023,8.1,147,298.6,110.0,Rebecca Adams,Nicholas King

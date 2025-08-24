@@ -24,7 +24,7 @@ export function ChartBuilder({ data, fileName }: ChartBuilderProps) {
   const [chartType, setChartType] = useState('bar');
   const [xAxis, setXAxis] = useState('');
   const [yAxis, setYAxis] = useState('');
-  const [groupBy, setGroupBy] = useState('');
+  const [groupBy, setGroupBy] = useState('none');
   const [aggregation, setAggregation] = useState('sum');
   
   const columns = useMemo(() => {
@@ -75,7 +75,7 @@ export function ChartBuilder({ data, fileName }: ChartBuilderProps) {
     // For bar and line charts
     if (!yAxis) return [];
     
-    if (groupBy) {
+    if (groupBy && groupBy !== 'none') {
       // Group data and aggregate
       const groups: Record<string, number[]> = {};
       data.forEach(row => {
@@ -276,7 +276,7 @@ export function ChartBuilder({ data, fileName }: ChartBuilderProps) {
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {textColumns.map(col => (
                       <SelectItem key={col} value={col}>{col}</SelectItem>
                     ))}
@@ -286,7 +286,7 @@ export function ChartBuilder({ data, fileName }: ChartBuilderProps) {
             )}
             
             {/* Aggregation */}
-            {groupBy && chartType !== 'pie' && (
+            {groupBy && groupBy !== 'none' && chartType !== 'pie' && (
               <div>
                 <label className="text-sm font-medium mb-2 block">Aggregation</label>
                 <Select value={aggregation} onValueChange={setAggregation}>

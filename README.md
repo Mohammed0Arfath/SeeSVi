@@ -1,4 +1,4 @@
-# DataFluent - AI-Powered Data Analytics
+# SeeSVi - AI-Powered Data Analytics
 
 A modern, responsive web application that transforms CSV data into actionable insights using AI-powered analytics, smart visualizations, and natural language queries.
 
@@ -66,7 +66,7 @@ A modern, responsive web application that transforms CSV data into actionable in
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd datafluent
+cd seesvi
 ```
 
 2. Install dependencies:
